@@ -8,27 +8,55 @@
 #ifndef _THREAD_POOL_H
 #define _THREAD_POOL_H
 
-#include <boost/shared_ptr.hpp>
+#include <vector>
+#include <memory>       // For std::shared_ptr
+#include <thread>
+#include "blocking_queue.h"
 
+/**
+ * Define a task
+ **/
 struct ThreadTask{
-    boost::function<void ()> task_function_;
+    std::function<void ()> task_function_;
     void *args;
 };
 
+const uint32_t kWorkThreadNum = 128;
 /**
- *
+ * Define a thread pool
  **/
-class TreadPool{
+class ThreadPool{
  public:
-  TreadPoll();
-  ~TreadPoll();
+  // Construction
+  ThreadPool(const uint32_t thread_num = kWorkThreadNum):
+    is_stop_(false),work_thread_num_(thread_num){
+      if(!is_stop_){
+        start();
+      }
+    }
+
+  // Destruction
+  ~ThreadPool(){
+    is_stop_ = true; 
+    stop();
+  }
+
+  void add_task(const ThreadTask& task);
  private:
+  // start thread
+  void start();
+
+  // stop thread
+  void stop();
+  // Run a task
+  void run();
+
   bool is_stop_;
   uint32_t work_thread_max_;
-  uint32_t work_thread_min;
-  uint32_t work_thread_num;
-  std::queue<boost::shared_ptr<boost::TreadTask> > task_queue_;
-  std::vector<boost::shared_ptr<boost::thread> >   work_thread_;
+  uint32_t work_thread_min_;
+  uint32_t work_thread_num_;
+  CBlockingQueue<ThreadTask> task_queue_;
+  std::vector<std::shared_ptr<std::thread> >   work_thread_;
 };
 
 #endif

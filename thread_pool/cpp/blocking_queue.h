@@ -8,11 +8,14 @@
 #ifndef _BLOCKING_QUEUE_H
 #define _BLOCKING_QUEUE_H
 
+#include <assert.h>
+#include <stdint.h>
 #include <deque>
-#include <mutex.h>
+#include <mutex>
+#include <condition_variable>
 
 /* Define max item num */
-const uint32_t kMaxItem = static_cast<uint32_t>(-1)
+const uint32_t kMaxItem = static_cast<uint32_t>(-1);
 
 template<typename Item>
 class CBlockingQueue {
@@ -20,11 +23,12 @@ class CBlockingQueue {
   CBlockingQueue(uint32_t max_item = kMaxItem){
     assert(kMaxItem > 0);
   }
-  ~CBlockingQueue();
+
+  ~CBlockingQueue(){}
   bool push_front(const Item& item){
     bool ret = false;
-    std::unique_lock(std::mutex) lock(mutex_);
-    if(!unlock_is_full_()){
+    std::unique_lock<std::mutex> lock(mutex_);
+    if(!unlock_is_full()){
       dqueue_.push_front(item);
       ret = true;
     }
@@ -35,8 +39,8 @@ class CBlockingQueue {
   }
   bool push_back(const Item& item){
     bool ret = false;
-    std::unique_lock(std::mutex) lock(mutex_);
-    if(!unlock_is_full_()){
+    std::unique_lock<std::mutex> lock(mutex_);
+    if(!unlock_is_full()){
       dqueue_.push_back(item);
       ret = true;
     }
@@ -47,9 +51,9 @@ class CBlockingQueue {
   }
         
   void pop_front(Item &item){
-    std::unique_lock(std::mutex) lock(mutex_);
+    std::unique_lock<std::mutex> lock(mutex_);
     while(unlock_is_empty()){
-        not_empty_condition_wait(lock); 
+        not_empty_condition_.wait(lock); 
     }
     item = dqueue_.front();
     dqueue_.pop_front();
@@ -58,9 +62,9 @@ class CBlockingQueue {
   }
 
   void pop_back(Item item){
-    std::unique_lock(std::mutex) lock(mutex_);
+    std::unique_lock<std::mutex> lock(mutex_);
     while(unlock_is_empty()){
-        not_empty_condition_wait(lock); 
+      not_empty_condition_.wait(lock); 
     }
     item = dqueue_.back();
     dqueue_.pop_back();

@@ -1,0 +1,9 @@
+1. test blocking_queue
+g++ blocking_queue_test.cpp -o blocking_queue_test -std=gnu++11
+
+=============================================
+
+2. test thread_pool
+g++ -g  thread_pool.cpp thread_pool_test.cpp -o thread_pool_test -std=gnu++11  -pthread
+
+
