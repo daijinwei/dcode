@@ -27,7 +27,9 @@ public:
     typedef std::map<KeyType, std::pair<ValueType, KeyListIterator> > KeyMap;
     typedef typename KeyMap::iterator KeyMapIterator;
 
-    LruCache(uint32_t cache_size = kCacheSize): 
+    LruCache(ValueType (*function)(const KeyType& key),
+                    uint32_t cache_size = kCacheSize): 
+    key_to_value_(function),
     cache_map_size_(kCacheSize){}
     ~LruCache(){}
     // Retrun if find a object, else insert a new key to cache map
@@ -43,7 +45,7 @@ public:
                                 (it->second)->second);
             return (it->second)->first;
         } else { // Insert a new key to cache
-            ValueType value = key_to_value(key); 
+            ValueType value = key_to_value_(key); 
             insert(key, value);
             return value;
         }
@@ -66,7 +68,7 @@ private:
         assert(!cache_entry_.empty());
         cache_entry_.pop_front();
     }
-    ValueType (*key_to_value)(const KeyType& key); 
+    ValueType (*key_to_value_)(const KeyType& key); 
 
     size_t  cache_map_size_;
     KeyMap  cache_map_;

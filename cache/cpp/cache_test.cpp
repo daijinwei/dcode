@@ -12,6 +12,11 @@
 
 using namespace std;
 
+std::string function(const std::string &s){
+    std::string str;
+    str = s;
+    return str;
+}
 int main(){
-    LruCache<int,int> cache_map(100);
+    LruCache<std::string,std::string> cache_map(function, 100);
 }
