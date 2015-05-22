@@ -11,6 +11,7 @@ OUT_LOG_FILE = "david.log"
 
 class Log(object):
     def __init__(self):
+        """Init Log class"""
         self.rotate_out_file = "/tmp/update.log"
         self.init_log()
 
@@ -24,7 +25,7 @@ class Log(object):
                         filemode='a')
                                       
         # rotate the log
-        file_thandler = RotatingFileHandler('/tmp/update.py.log', maxBytes=10*1024*1024,backupCount=5)
+        file_thandler = RotatingFileHandler(self.rotate_out_file, maxBytes=10*1024*1024,backupCount=5)
         file_thandler.setLevel(logging.INFO)
         formatter = logging.Formatter(':%(lineno)d:%(asctime)s-%(levelname)s >> %(message)s')
         file_thandler.setFormatter(formatter)
