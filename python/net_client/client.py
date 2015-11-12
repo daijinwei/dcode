@@ -34,13 +34,13 @@ class Reporter(object):
 
         if len(addrinfo_list) <= 0:
             raise ValueError, "transfer address list <= 0"
-        self.logger			= {}
-        self.logger			= config['LOGGER']
-        self.addrinfo_list  = addrinfo_list                 #(ip:port) addr list
-        self.trans_num      = len(addrinfo_list)
-        self.addrinfo       = self.__get_addrinfo_list()
-        self.timeout        = timeout
-        self.sockfd         = self.__create_connect()       # socket fd
+        self.__logger			= {}
+        self.__logger			= config['LOGGER']
+        self.__addrinfo_list    = addrinfo_list                 #(ip:port) addr list
+        self.__trans_num        = len(addrinfo_list)
+        self.__addrinfo         = self.__get_addrinfo_list()
+        self.__timeout          = timeout
+        self.__sockfd           = self.__create_connect()       # socket fd
 
     def __get_addrinfo_list(self):
         '''Get addrinfo list.
@@ -50,7 +50,7 @@ class Reporter(object):
         '''
 
         addr_info = []
-        for index, item in enumerate(self.addrinfo_list):
+        for index, item in enumerate(self.__addrinfo_list):
             (ip, port) = item.split(':')
             addr_info.append((ip, int(port)))
         return addr_info
@@ -68,7 +68,7 @@ class Reporter(object):
         try:
             sockaddrinfo = socket.getaddrinfo(ip, port, socket.AF_UNSPEC, socket.SOCK_STREAM)
         except socket.gaierror as msg:
-            self.logger.error("(%s, %d) getaddrinfo is failed, Error: %s" %(ip, port, str(msg)))
+            self.__logger.error("(%s, %d) getaddrinfo is failed, Error: %s" %(ip, port, str(msg)))
             sockfd = None
             return sockfd
 
@@ -76,10 +76,10 @@ class Reporter(object):
             family, socktype, proto, canonname, sockaddr = res
             try:
                 sockfd = socket.socket(family, socktype, proto)
-                sockfd.settimeout(self.timeout)
+                sockfd.settimeout(self.__timeout)
                 break
             except socket.error as msg:
-                self.logger.error("(%s, %d) create socket failed, Error: %s" %(ip, port, str(msg)))
+                self.__logger.error("(%s, %d) create socket failed, Error: %s" %(ip, port, str(msg)))
                 sockfd = None 
                 continue
         return sockfd
@@ -90,7 +90,7 @@ class Reporter(object):
         Returns: if connect successfully, return sockfd, else return None.
         '''
 
-        for addr in self.addrinfo:
+        for addr in self.__addrinfo:
             (ip, port) = addr
             sockfd = self.__create_socket(ip, port)
             if None == sockfd:
@@ -103,7 +103,7 @@ class Reporter(object):
                 if None != sockfd:
                     sockfd.close()
                 sockfd = None
-                self.logger.error("address %s:%d Connnect to socket is failed, Error: %s" %(ip, port, str(msg)))
+                self.__logger.error("address %s:%d Connnect to socket is failed, Error: %s" %(ip, port, str(msg)))
         return sockfd
 
     def __sendall_data(self, sockfd, data):
@@ -125,7 +125,7 @@ class Reporter(object):
             if None != sockfd:
                 sockfd.close()
             ret = -1
-            self.logger.info("socket.sendall data failed, Error: %s" %(str(e)))
+            self.__logger.info("socket.sendall data failed, Error: %s" %(str(e)))
         return ret
 
     def __send(self, sockfd, data):
@@ -154,21 +154,21 @@ class Reporter(object):
                 break
 
             try:
-                (read_list, write_list, exception_list) = select.select(rlist, wlist, elist, self.timeout)
+                (read_list, write_list, exception_list) = select.select(rlist, wlist, elist, self.__timeout)
             except select.error, e:
                 (errno, msg) = e
-                self.logger.error("select failed, errno: %d, Error: %s" %(errno, msg))
+                self.__logger.error("select failed, errno: %d, Error: %s" %(errno, msg))
                 break
 
             if not (read_list or write_list or exceptin_list):
-                self.logger.info("select timeout")
+                self.__logger.info("select timeout")
                 break
 
             # send data
             for write_fd in write_list:
                 ret = self.__sendall_data(write_fd, data)
                 if -1 == ret:
-                    self.logger.info("send data failed")
+                    self.__logger.info("send data failed")
                 if wlist:
                     wlist.remove(write_fd)
                 
@@ -185,7 +185,7 @@ class Reporter(object):
         if True == send_success_flag:
             return 0
         else:
-            self.logger.info("send data faild")
+            self.__logger.info("send data faild")
             return -1
 
     def send_data_to_server(self, data):
@@ -201,13 +201,13 @@ class Reporter(object):
         counter = 0
         times = 3
         while counter < times:
-            if None == self.sockfd:
-                self.sockfd = self.__create_connect()
+            if None == self.__sockfd:
+                self.__sockfd = self.__create_connect()
                 time.sleep(1)
                 counter += 1
 
-            if None != self.sockfd:
-                ret = self.__send(self.sockfd, data)
+            if None != self.__sockfd:
+                ret = self.__send(self.__sockfd, data)
                 break
 
         if counter == times:
