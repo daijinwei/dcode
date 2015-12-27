@@ -1,0 +1,2 @@
+A universal serverl frame which can cotrol process's start or stop.
+A subclass can inherit class ServiceFrame.
